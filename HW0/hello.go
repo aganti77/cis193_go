@@ -22,9 +22,7 @@ func Fizzbuzz(n int) string {
 		return "Fizz"
 	} else if n%5 == 0 {
 		return "Buzz"
-	} else {
-		return ""
-	}
+	return ""
 }
 
 // IsPrime checks if the number is prime.
@@ -38,7 +36,7 @@ func IsPrime(n int) bool {
 		return false
 	}
 	i := 3
-	for i^2 <= n {
+	for i*i <= n {
 		if n%i == 0 {
 			return false
 		}
@@ -53,11 +51,10 @@ func IsPalindrome(s string) bool {
 	if len(s) == 0 {
 		return false
 	}
-	s = strings.ToLower(s)
 	var left int = 0
 	var right int = len(s) - 1
 	for left < right {
-		if strings.Compare(string(s[left]), string(s[right])) != 0 {
+		if (s[left]) != s[right] {
 			return false
 		}
 		left++
