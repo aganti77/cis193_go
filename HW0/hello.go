@@ -22,6 +22,7 @@ func Fizzbuzz(n int) string {
 		return "Fizz"
 	} else if n%5 == 0 {
 		return "Buzz"
+	}
 	return ""
 }
 
@@ -51,8 +52,8 @@ func IsPalindrome(s string) bool {
 	if len(s) == 0 {
 		return false
 	}
-	var left int = 0
-	var right int = len(s) - 1
+	var left int
+	var right = len(s) - 1
 	for left < right {
 		if (s[left]) != s[right] {
 			return false
