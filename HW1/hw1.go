@@ -21,7 +21,7 @@ func main() {
 // For example, ParsePhone("123-456-7890") => "(123) 456-7890"
 //              ParsePhone("1 2 3 4 5 6 7 8 9 0") => "(123) 456-7890"
 func ParsePhone(phone string) string {
-	var phoneRepl string = strings.Replace(phone, " ", "", -1)
+	phoneRepl := strings.Replace(phone, " ", "", -1)
 	phoneRepl = strings.Replace(phoneRepl, "-", "", -1)
 	return fmt.Sprintf("(%s) %s-%s", phoneRepl[0:3], phoneRepl[3:6], phoneRepl[6:])
 }
