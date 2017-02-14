@@ -10,14 +10,10 @@ import (
 
 func main() {
 	// Feel free to use the main function for testing your functions
-	hello := map[string]string{
-		"hello":   "world",
-		"hola":    "mundo",
-		"bonjour": "monde",
-	}
-	for k, v := range hello {
-		fmt.Printf("%s, %s\n", strings.Title(k), v)
-	}
+	tru := [5]int{1, 2, 3, 2, 1}
+	fals := [5]int{1, 4, 5, 3, 2}
+	fmt.Println(IsPalindrome(sort.IntSlice(tru[:])))
+	fmt.Println(IsPalindrome(sort.IntSlice(fals[:])))
 }
 
 // Problem 1: Sorting Names
@@ -42,9 +38,29 @@ type PersonSlice []*Person
 
 // NewPerson is a constructor for Person. ID should be assigned automatically in
 // sequential order, starting at 1 for the first Person created.
+var personCount = 1
+
 func NewPerson(first, last string) *Person {
-	// TODO
-	return new(Person)
+	p := Person{ID: personCount, FirstName: first, LastName: last}
+	personCount += 1
+	return &p
+}
+
+func (ps PersonSlice) Len() int {
+	return len(ps)
+}
+
+func (ps PersonSlice) Swap(i, j int) {
+	ps[i], ps[j] = ps[j], ps[i]
+}
+
+func (ps PersonSlice) Less(i, j int) bool {
+	if ps[i].LastName != ps[j].LastName {
+		return strings.Compare(ps[i].LastName, ps[j].LastName) == -1
+	} else if ps[i].FirstName != ps[j].FirstName {
+		return strings.Compare(ps[i].FirstName, ps[j].FirstName) == -1
+	}
+	return ps[i].ID < ps[j].ID
 }
 
 // Problem 2: IsPalindrome Redux
@@ -58,8 +74,19 @@ func NewPerson(first, last string) *Person {
 // IsPalindrome checks if the string is a palindrome.
 // A palindrome is a string that reads the same backward as forward.
 func IsPalindrome(s sort.Interface) bool {
-	// TODO
-	return false
+	if s.Len() == 0 {
+		return false
+	}
+	left := 0
+	right := s.Len() - 1
+	for left < right {
+		if s.Less(left, right) || s.Less(right, left) {
+			return false
+		}
+		left++
+		right--
+	}
+	return true
 }
 
 // Problem 3: Functional Programming
@@ -75,6 +102,11 @@ func IsPalindrome(s sort.Interface) bool {
 // Note the argument signature of f - func(int, int) int.
 // This means f is a function which has 2 int arguments and returns an int.
 func Fold(s []int, v int, f func(int, int) int) int {
-	// TODO
-	return 0
+	if len(s) == 0 {
+		return v
+	} else if len(s) == 1 {
+		return f(v, s[0])
+	} else {
+		return f(Fold(s[:len(s)-1], v, f), s[len(s)-1])
+	}
 }
