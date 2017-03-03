@@ -2,26 +2,36 @@
 // Due February 28, 2017 at 11:59pm
 package main
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"sync"
+	"time"
+)
 
 func main() {
 	// Feel free to use the main function for testing your functions
-	hello := make(chan string, 5)
-	hello <- "Hello world"
-	hello <- "Привет мир"
-	hello <- "Привіт Світ"
-	hello <- "Witaj świecie"
-	close(hello)
-	fmt.Println(<-hello)
-	for greeting := range hello {
-		fmt.Println(greeting)
+	tasks := []func() (string, error){
+		func() (string, error) {
+			time.Sleep(time.Second)
+			fmt.Println(1)
+			return "hello", nil
+		},
+		func() (string, error) {
+			time.Sleep(time.Second)
+			fmt.Println(2)
+			return "world", nil
+		},
 	}
+	ch := ConcurrentRetry(tasks, 4, 2)
+	fmt.Println(<-ch)
 }
 
 // Filter copies values from the input channel into an output channel that match the filter function p
 // The function p determines whether an int from the input channel c is sent on the output channel
 func Filter(c <-chan int, p func(int) bool) <-chan int {
-	result := make(chan int)
+	result := make(chan int, len(c))
+	defer close(result)
 	for i := range c {
 		if p(i) {
 			result <- i
@@ -51,8 +61,28 @@ type Result struct {
 // execute, and all results should be sent on the output channel. Once all tasks
 // have been completed, close the channel.
 func ConcurrentRetry(tasks []func() (string, error), concurrent int, retry int) <-chan Result {
-	// TODO
-	return nil
+	result := make(chan Result, concurrent)
+	var wg sync.WaitGroup
+	for i, t := range tasks {
+		go func() {
+			wg.Add(1)
+			for j := 0; j < retry; j++ {
+				str, err := t()
+				if err == nil {
+					add := Result{index: i, result: str}
+					result <- add
+					break
+				}
+			}
+			wg.Done()
+		}()
+	}
+	go func() {
+		wg.Wait()
+		close(result)
+	}()
+	fmt.Println("Done") // This print statement is left in the code because, for an undetermined reason, the function does not work without it
+	return result
 }
 
 // Task is an interface for types that process integers
@@ -66,9 +96,24 @@ type Task interface {
 // You should return the result of a Task even if it errors.
 // Do not leave any pending goroutines. Make sure all goroutines are cleaned up
 // properly and any synchronizing mechanisms closed.
-func Fastest(tasks ...Task) (int, error) {
-	// TODO
-	return 0, nil
+type placer struct {
+	i int
+	e error
+}
+
+func Fastest(input int, tasks ...Task) (int, error) {
+	if len(tasks) == 0 {
+		return 0, errors.New("No Tasks submitted")
+	}
+	result := make(chan placer, len(tasks))
+	for _, t := range tasks {
+		go func() {
+			in, er := t.Execute(input)
+			result <- placer{i: in, e: er}
+		}()
+	}
+	fastest := <-result
+	return fastest.i, fastest.e
 }
 
 // MapReduce takes any number of tasks, and feeds their results through reduce
@@ -78,7 +123,26 @@ func Fastest(tasks ...Task) (int, error) {
 // their results in any order.
 // Do not leave any pending goroutines. Make sure all goroutines are cleaned up
 // properly and any synchronizing mechanisms closed.
-func MapReduce(reduce func(results []int) int, tasks ...Task) (int, error) {
-	// TODO
-	return 0, nil
+func MapReduce(input int, reduce func(results []int) int, tasks ...Task) (int, error) {
+	if len(tasks) == 0 {
+		return 0, errors.New("No Tasks submitted")
+	}
+	resultChan := make(chan placer, len(tasks))
+	for _, t := range tasks {
+		go func() {
+			in, er := t.Execute(input)
+			add := placer{i: in, e: er}
+			resultChan <- add
+		}()
+	}
+	resultSlice := make([]int, len(tasks))
+	for result := range resultChan {
+		if result.e != nil {
+			return 0, errors.New("An error occurred")
+		} else {
+			resultSlice = append(resultSlice, result.i)
+		}
+	}
+	close(resultChan)
+	return reduce(resultSlice), nil
 }
