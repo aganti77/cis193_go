@@ -14,11 +14,10 @@ import (
 )
 
 func main() {
-	i, e := GetCountryGDP("Colombia")
-	if e != nil {
-		log.Fatal(e)
+	i := ScrapeHackerNews(5)
+	for j := range i {
+		fmt.Println(i[j])
 	}
-	fmt.Println(i)
 }
 
 // News is a Hacker News article listing
@@ -55,14 +54,14 @@ func ScrapeHackerNews(n int) NewsSlice {
 	titles := make([]string, 0)
 	usernames := make([]string, 0)
 	URLs := make([]string, 0)
-	titleURL := doc.Find("tr.athing td.title a")
-	pointsName := doc.Find("td.subtext")
-	for i := range titleURL.Nodes {
-		title := titleURL.Eq(i).Text()
+	titleUrls := doc.Find("tr.athing td.title a.storylink")
+	for i := range titleUrls.Nodes {
+		title := titleUrls.Eq(i).Text()
 		titles = append(titles, title)
-		url, _ := titleURL.Eq(i).Attr("href")
+		url, _ := titleUrls.Eq(i).Attr("href")
 		URLs = append(URLs, url)
 	}
+	pointsName := doc.Find("td.subtext")
 	for i := range pointsName.Nodes {
 		point := pointsName.Eq(i).Find("span.score").Text()
 		if len(point) == 0 {
@@ -82,7 +81,6 @@ func ScrapeHackerNews(n int) NewsSlice {
 	}
 	for i := 0; i < n; i++ {
 		adder := &News{Points: points[i], Title: titles[i], Username: usernames[i], URL: URLs[i]}
-		fmt.Println(*adder)
 		result = append(result, adder)
 	}
 	return NewsSlice(result)
