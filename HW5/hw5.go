@@ -64,6 +64,8 @@ func ConcurrentRetry(tasks []func() (string, error), concurrent int, retry int) 
 	result := make(chan Result, concurrent)
 	var wg sync.WaitGroup
 	for i, t := range tasks {
+		str, err := t()       // This line and the line after are left in the code because, for an undetermined reason,
+		fmt.Println(str, err) // the function does not work as intended without it
 		go func() {
 			wg.Add(1)
 			for j := 0; j < retry; j++ {
@@ -81,7 +83,7 @@ func ConcurrentRetry(tasks []func() (string, error), concurrent int, retry int) 
 		wg.Wait()
 		close(result)
 	}()
-	fmt.Println("Done") // This print statement is left in the code because, for an undetermined reason, the function does not work without it
+	fmt.Println("Done") // This print statement is left in the code because, for an undetermined reason, the function does not work as intended without it
 	return result
 }
 
