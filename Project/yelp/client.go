@@ -20,7 +20,10 @@ func GetAuthClient(client_id string, client_secret string) *Client {
 	data.Add("client_secret", client_secret)
 
 	client := &http.Client{}
-	r, _ := http.NewRequest("POST", authUrl, bytes.NewBufferString(data.Encode()))
+	r, err := http.NewRequest("POST", authUrl, bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		log.Println(err)
+	}
 	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(r)
